@@ -17,6 +17,12 @@ import PIL
 from utils import ArraySaver
 from PIL import Image
 import sys
+import tensorflow as tf
+import random
+import numpy as np
+tf.set_random_seed(0)
+random.seed(0)
+np.random.seed(0)
 
 datashapes = {}
 datashapes['mnist'] = [28, 28, 1]
@@ -292,7 +298,7 @@ class DataHandler(object):
         mixture_variance = 0.01
 
         # Now we sample points, for that we unseed
-        np.random.seed()
+        np.random.seed(0)
         num = opts['toy_dataset_size']
         X = np.zeros((num, opts['toy_dataset_dim'], 1, 1))
         for idx in xrange(num):
@@ -331,7 +337,7 @@ class DataHandler(object):
                 max_val / variance_factor(modes_num, opts['toy_dataset_dim'])
 
         # Now we sample points, for that we unseed
-        np.random.seed()
+        np.random.seed(0)
         num = opts['toy_dataset_size']
         X = np.zeros((num, opts['toy_dataset_dim'], 1, 1))
         for idx in xrange(num):
@@ -365,7 +371,7 @@ class DataHandler(object):
         seed = 123
         np.random.seed(seed)
         np.random.shuffle(X)
-        np.random.seed()
+        np.random.seed(0)
 
         self.data_shape = (128, 128, 3)
         self.data = Data(opts, X/255.)
@@ -386,7 +392,7 @@ class DataHandler(object):
         seed = 123
         np.random.seed(seed)
         np.random.shuffle(X)
-        np.random.seed()
+        np.random.seed(0)
 
         self.data_shape = (64, 64, 1)
         test_size = 10000
@@ -443,7 +449,7 @@ class DataHandler(object):
         np.random.shuffle(X)
         np.random.seed(seed)
         np.random.shuffle(y)
-        np.random.seed()
+        np.random.seed(0)
 
         self.data_shape = (28, 28, 1)
         test_size = 10000
@@ -572,7 +578,7 @@ class DataHandler(object):
         np.random.shuffle(X)
         np.random.seed(seed)
         np.random.shuffle(y)
-        np.random.seed()
+        np.random.seed(0)
 
         self.data_shape = (32, 32, 3)
 
@@ -597,7 +603,7 @@ class DataHandler(object):
         random.seed(seed)
         random.shuffle(paths)
         random.shuffle(datapoint_ids)
-        random.seed()
+        random.seed(0)
 
         saver = ArraySaver('disk', workdir=opts['work_dir'])
         saver.save('shuffled_training_ids', datapoint_ids)
@@ -625,7 +631,7 @@ class DataHandler(object):
         np.random.seed(seed)
         np.random.shuffle(X)
         np.random.seed(seed)
-        np.random.seed()
+        np.random.seed(0)
 
         self.data_shape = (64, 64, 3)
         test_size = 5000

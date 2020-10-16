@@ -37,7 +37,7 @@ def improved_sampling(opts):
             if opts['pz'] in ('normal', 'sphere'):
                 codes = tf.get_variable(
                     "latent_codes", [BATCH_SIZE, opts['zdim']],
-                    tf.float32, tf.random_normal_initializer(stddev=1.))
+                    tf.float32, tf.random_normal_initializer(stddev=1., seed=0))
                 if opts['pz'] == 'sphere':
                     z = codes / (tf.norm(codes, axis=0) + 1e-8)
                 else:
@@ -45,7 +45,7 @@ def improved_sampling(opts):
             elif opts['pz'] == 'uniform':
                 codes = tf.get_variable(
                     "latent_codes", [BATCH_SIZE, opts['zdim']],
-                    tf.float32, tf.random_uniform_initializer(minval=-1., maxval=1.))
+                    tf.float32, tf.random_uniform_initializer(minval=-1., maxval=1., seed=0))
             z = opts['pz_scale'] * z
             is_training_ph = tf.placeholder(tf.bool, name='is_training_ph')
             gen, _ = decoder(opts, z, is_training=is_training_ph)
@@ -266,7 +266,7 @@ def mmdpp_penalty(opts, wae_model, sample_pz):
     # For that it is enough to sample batch_size * K standard normal vectors
     # rescale those and then add encoder means
     eps = tf.random_normal((n * NUMCODES, opts['zdim']),
-                           0., 1., dtype=tf.float32)
+                           0., 1., dtype=tf.float32, seed=0)
     sigmas_q = wae_model.enc_sigmas
     block_var = tf.reshape(tf.tile(sigmas_q, [1, NUMCODES]), [-1, opts['zdim']])
     eps_q = tf.multiply(eps, tf.sqrt(1e-8 + tf.exp(block_var)))
@@ -386,7 +386,7 @@ def mmdpp_1d_penalty(opts, wae_model, sample_pz):
     # For that it is enough to sample batch_size * K standard normal vectors
     # rescale those and then add encoder means
     eps = tf.random_normal((n * NUMCODES, opts['zdim']),
-                           0., 1., dtype=tf.float32)
+                           0., 1., dtype=tf.float32, seed=0)
     sigmas_q = wae_model.enc_sigmas
     block_var = tf.reshape(tf.tile(sigmas_q, [1, NUMCODES]), [-1, opts['zdim']])
     eps_q = tf.multiply(eps, tf.sqrt(1e-8 + tf.exp(block_var)))

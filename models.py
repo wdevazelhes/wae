@@ -2,6 +2,12 @@ import numpy as np
 import tensorflow as tf
 import ops
 from datahandler import datashapes
+import tensorflow as tf
+import random
+import numpy as np
+tf.set_random_seed(0)
+random.seed(0)
+np.random.seed(0)
 
 def encoder(opts, inputs, reuse=False, is_training=False):
 
@@ -9,7 +15,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
         # Particular instance of the implicit random encoder
         def add_noise(x):
             shape = tf.shape(x)
-            return x + tf.truncated_normal(shape, 0.0, 0.01)
+            return x + tf.truncated_normal(shape, 0.0, 0.01, seed=0)
         def do_nothing(x):
             return x
         inputs = tf.cond(is_training,
@@ -56,7 +62,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
             # place in latent space
             sample_size = tf.shape(res)[0]
             eps = tf.random_normal((sample_size, opts['zdim']),
-                                   0., 1., dtype=tf.float32)
+                                   0., 1., dtype=tf.float32, seed=0)
             eps_mod, noise_matrix = transform_noise(opts, res, eps)
             res = res + eps_mod
 

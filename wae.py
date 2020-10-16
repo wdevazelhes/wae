@@ -21,6 +21,7 @@ import improved_wae
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 class WAE(object):
 
@@ -64,7 +65,7 @@ class WAE(object):
                 self.add_sigmas_debug()
 
             eps = tf.random_normal((sample_size, opts['zdim']),
-                                   0., 1., dtype=tf.float32)
+                                   0., 1., dtype=tf.float32, seed=0)
             self.encoded = self.enc_mean + tf.multiply(
                 eps, tf.sqrt(1e-8 + tf.exp(self.enc_sigmas)))
             # self.encoded = self.enc_mean + tf.multiply(
@@ -174,10 +175,10 @@ class WAE(object):
                 tf.float32, [None, opts['zdim']], name='sample_ph')
             v = tf.get_variable(
                 "proj_v", [opts['zdim'], 1],
-                tf.float32, tf.random_normal_initializer(stddev=1.))
+                tf.float32, tf.random_normal_initializer(stddev=1., seed=0))
             u = tf.get_variable(
                 "proj_u", [opts['zdim'], 1],
-                tf.float32, tf.random_normal_initializer(stddev=1.))
+                tf.float32, tf.random_normal_initializer(stddev=1., seed=0))
             npoints = tf.cast(tf.shape(sample)[0], tf.int32)
 
             # First we need to make sure projection matrix is orthogonal
@@ -409,17 +410,17 @@ class WAE(object):
         else:
             self.pretrain_opt = None
 
-    def sample_pz(self, num=100):
+    def sample_pz(self, rng, num=100):
         opts = self.opts
         noise = None
         distr = opts['pz']
         if distr == 'uniform':
-            noise = np.random.uniform(
+            noise = rng.uniform(
                 -1, 1, [num, opts["zdim"]]).astype(np.float32)
         elif distr in ('normal', 'sphere'):
             mean = np.zeros(opts["zdim"])
             cov = np.identity(opts["zdim"])
-            noise = np.random.multivariate_normal(
+            noise = rng.multivariate_normal(
                 mean, cov, num).astype(np.float32)
             if distr == 'sphere':
                 noise = noise / np.sqrt(
@@ -430,12 +431,13 @@ class WAE(object):
         opts = self.opts
         steps_max = 200
         batch_size = opts['e_pretrain_sample_size']
+        rng = np.random.RandomState(0)
         for step in xrange(steps_max):
             train_size = data.num_points
-            data_ids = np.random.choice(train_size, min(train_size, batch_size),
+            data_ids = rng.choice(train_size, min(train_size, batch_size),
                                         replace=False)
             batch_images = data.data[data_ids].astype(np.float)
-            batch_noise =  self.sample_pz(batch_size)
+            batch_noise =  self.sample_pz(rng, num=batch_size)
 
             [_, loss_pretrain] = self.sess.run(
                 [self.pretrain_opt,
@@ -457,7 +459,9 @@ class WAE(object):
         such that projection looks least Gaussian
         """
         opts = self.opts
+        tf.set_random_seed(0)
         with self.sess.as_default(), self.sess.graph.as_default():
+	    tf.set_random_seed(0)
             sample = self.proj_sample
             optim = self.proj_opt
             loss = self.proj_loss
@@ -493,9 +497,10 @@ class WAE(object):
                     dot_prod = tf.reduce_sum(tf.multiply(u, v)).eval()
         if not updated:
             logging.error('WARNING: possible bug in the worst 2d projection')
+        tf.reset_default_graph() 	
         return proj_mat, dot_prod
 
-    def train(self, data):
+        def train(self, data):
         opts = self.opts
         if opts['verbose']:
             logging.error(opts)
@@ -509,7 +514,8 @@ class WAE(object):
         batches_num = data.num_points / opts['batch_size']
         train_size = data.num_points
         self.num_pics = opts['plot_num_pics']
-        self.fixed_noise = self.sample_pz(opts['plot_num_pics'])
+        rng = np.random.RandomState(0)
+        self.fixed_noise = self.sample_pz(rng, opts['plot_num_pics'])
 
         self.sess.run(self.init)
 
@@ -565,15 +571,15 @@ class WAE(object):
                                  global_step=counter)
 
             # Iterate over batches
-
+            np.random.seed(0)
+            rng = np.random.RandomState(0)
             for it in xrange(batches_num):
 
                 # Sample batches of data points and Pz noise
-
-                data_ids = np.random.choice(
+                data_ids = rng.choice(
                     train_size, opts['batch_size'], replace=False)
                 batch_images = data.data[data_ids].astype(np.float)
-                batch_noise = self.sample_pz(opts['batch_size'])
+                batch_noise = self.sample_pz(rng, opts['batch_size'])
 
                 # Update encoder and decoder
 
@@ -725,9 +731,9 @@ class WAE(object):
                                        per_dim_range[idim][0],
                                        per_dim_range[idim][2],
                                        per_dim_range[idim][1]))
-
+                    rng = np.random.RandomState(0)
                     # Choosing the 2d projection for Pz vs Qz plots
-                    pz_noise = self.sample_pz(opts['plot_num_pics'])
+                    pz_noise = self.sample_pz(rng, opts['plot_num_pics'])
                     if opts['pz'] == 'normal' and opts['zdim'] > 2:
                         # Finding the least Gaussian projection for Qz
                         proj_mat, check = self.least_gaussian_2d(

@@ -7,6 +7,13 @@ from wae import WAE
 import improved_wae
 from datahandler import DataHandler
 import utils
+import tensorflow as tf
+import random
+import numpy as np
+
+
+# import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp", default='mnist_small',
@@ -43,6 +50,10 @@ parser.add_argument("--checkpoint",
 FLAGS = parser.parse_args()
 
 def main():
+
+    tf.set_random_seed(0)
+    random.seed(0)
+    np.random.seed(0)
 
     if FLAGS.exp == 'celebA':
         opts = configs.config_celebA
