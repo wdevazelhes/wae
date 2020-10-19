@@ -500,7 +500,7 @@ class WAE(object):
         tf.reset_default_graph() 	
         return proj_mat, dot_prod
 
-        def train(self, data):
+    def train(self, data):
         opts = self.opts
         if opts['verbose']:
             logging.error(opts)
@@ -576,9 +576,12 @@ class WAE(object):
             for it in xrange(batches_num):
 
                 # Sample batches of data points and Pz noise
-                data_ids = rng.choice(
-                    train_size, opts['batch_size'], replace=False)
+                #data_ids = rng.choice(
+                #    train_size, opts['batch_size'], replace=False)
+                data_ids = slice(it * opts['batch_size'], (it + 1) * opts['batch_size'])
+                # TODO: check that the data here is the same as in our WAE
                 batch_images = data.data[data_ids].astype(np.float)
+                print(batch_images[0, 0, 0])
                 batch_noise = self.sample_pz(rng, opts['batch_size'])
 
                 # Update encoder and decoder
@@ -638,6 +641,10 @@ class WAE(object):
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
                         counter, losses_match[-1]))
+                    logging.error('Total loss after %d steps: %f' % (
+                        counter, losses[-1]))
+                    logging.error('Reconstruction loss after %d steps: %f' % (
+                        counter, losses_rec[-1]))
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':

@@ -199,16 +199,18 @@ class Data(object):
         im = Image.open(utils.o_gfile((data_dir, filename), 'rb'))
         if self.crop_style == 'closecrop':
             # This method was used in DCGAN, pytorch-gan-collection, AVB, ...
-            left = (width - new_width) / 2
-            top = (height - new_height) / 2
-            right = (width + new_width) / 2
-            bottom = (height + new_height)/2
-            im = im.crop((left, top, right, bottom))
-            im = im.resize((64, 64), PIL.Image.ANTIALIAS)
+            # left = (width - new_width) / 2
+            # top = (height - new_height) / 2
+            # right = (width + new_width) / 2
+            # bottom = (height + new_height)/2
+            # im = im.crop((left, top, right, bottom))
+            # im = im.resize((64, 64), PIL.Image.ANTIALIAS)
+            pass
         elif self.crop_style == 'resizecrop':
             # This method was used in ALI, AGE, ...
-            im = im.resize((64, 78), PIL.Image.ANTIALIAS)
-            im = im.crop((0, 7, 64, 64 + 7))
+            # im = im.resize((64, 78), PIL.Image.ANTIALIAS)
+            # im = im.crop((0, 7, 64, 64 + 7))
+            pass
         else:
             raise Exception('Unknown crop style specified')
         return np.array(im).reshape(64, 64, 3) / 255.
@@ -595,10 +597,10 @@ class DataHandler(object):
         """
         logging.debug('Loading CelebA dataset')
 
-        num_samples = 202599
+        num_samples = 162770
 
         datapoint_ids = range(1, num_samples + 1)
-        paths = ['%.6d.jpg' % i for i in xrange(1, num_samples + 1)]
+        paths = ['image_{}.jpg'.format(i) for i in xrange(1, num_samples + 1)]
         seed = 123
         random.seed(seed)
         random.shuffle(paths)
@@ -610,7 +612,7 @@ class DataHandler(object):
 
         self.data_shape = (64, 64, 3)
         test_size = 20000
-        self.data = Data(opts, None, paths[:-test_size])
+        self.data = Data(opts, None, paths)
         self.test_data = Data(opts, None, paths[-test_size:])
         self.num_points = num_samples - test_size
         self.labels = np.array(self.num_points * [0])

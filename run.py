@@ -12,8 +12,8 @@ import random
 import numpy as np
 
 
-# import os
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp", default='mnist_small',
