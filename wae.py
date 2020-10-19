@@ -500,7 +500,7 @@ class WAE(object):
         tf.reset_default_graph() 	
         return proj_mat, dot_prod
 
-        def train(self, data):
+    def train(self, data):
         opts = self.opts
         if opts['verbose']:
             logging.error(opts)
