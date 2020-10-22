@@ -600,12 +600,12 @@ class DataHandler(object):
         num_samples = 162770
 
         datapoint_ids = range(1, num_samples + 1)
-        paths = ['image_{}.jpg'.format(i) for i in xrange(1, num_samples + 1)]
+        paths = ['image_{}.jpg'.format(i) for i in xrange(0, num_samples)]
         seed = 123
-        random.seed(seed)
-        random.shuffle(paths)
-        random.shuffle(datapoint_ids)
-        random.seed(0)
+        #random.seed(seed)
+        #random.shuffle(paths)
+        #random.shuffle(datapoint_ids)
+        #random.seed(0)
 
         saver = ArraySaver('disk', workdir=opts['work_dir'])
         saver.save('shuffled_training_ids', datapoint_ids)
