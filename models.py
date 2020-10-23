@@ -43,7 +43,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
                 res = (mean, log_sigmas)
         elif opts['e_arch'] == 'dcgan':
             # Fully convolutional architecture similar to DCGAN
-            res = dcgan_encoder(opts, inputs, is_training, reuse)
+            res, l1 = dcgan_encoder(opts, inputs, is_training, reuse)
         elif opts['e_arch'] == 'ali':
             # Architecture smilar to "Adversarially learned inference" paper
             res = ali_encoder(opts, inputs, is_training, reuse)
@@ -73,7 +73,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
             # Mapping back to the [-1,1]^zdim box
             res = tf.nn.tanh(res)
 
-        return res, noise_matrix
+        return res, l1, noise_matrix
 
 def decoder(opts, noise, reuse=False, is_training=True):
     assert opts['dataset'] in datashapes, 'Unknown dataset!'
@@ -120,13 +120,15 @@ def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
         scale = 2**(num_layers - i - 1)
         layer_x = ops.conv2d(opts, layer_x, num_units / scale,
                              scope='h%d_conv' % i)
+        if i == 0:
+            l1 = layer_x
         if opts['batch_norm']:
             layer_x = ops.batch_norm(opts, layer_x, is_training,
                                      reuse, scope='h%d_bn' % i)
         layer_x = tf.nn.relu(layer_x)
     if opts['e_noise'] != 'gaussian':
         res = ops.linear(opts, layer_x, opts['zdim'], scope='hfinal_lin')
-        return res
+        return res, l1
     else:
         mean = ops.linear(opts, layer_x, opts['zdim'], scope='mean_lin')
         log_sigmas = ops.linear(opts, layer_x,

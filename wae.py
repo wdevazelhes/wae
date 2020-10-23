@@ -55,7 +55,7 @@ class WAE(object):
             if opts['e_noise'] == 'implicit':
                 self.encoded, self.encoder_A = res
             else:
-                self.encoded, _ = res
+                self.encoded, self.l1, _ = res
         elif opts['e_noise'] == 'gaussian':
             # Encoder outputs means and variances of Gaussian
             enc_mean, enc_sigmas = res[0]
@@ -88,7 +88,6 @@ class WAE(object):
             self.opts, self.sample_points, self.reconstructed)
         self.wae_objective = self.loss_reconstruct + \
                          self.wae_lambda * self.penalty
-
         # Extra costs if any
         if 'w_aef' in opts and opts['w_aef'] > 0:
             improved_wae.add_aefixedpoint_cost(opts, self)
@@ -508,6 +507,7 @@ class WAE(object):
         losses = []
         losses_rec = []
         losses_match = []
+        l1s = []
         blurr_vals = []
         encoding_changes = []
         enc_test_prev = None
@@ -596,8 +596,8 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [_, loss, loss_rec, loss_match] = self.sess.run(
-                    [self.ae_opt,
+                [l1, _, loss, loss_rec, loss_match] = self.sess.run(
+                    [self.l1, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
                      self.penalty],
@@ -638,6 +638,7 @@ class WAE(object):
                 losses.append(loss)
                 losses_rec.append(loss_rec)
                 losses_match.append(loss_match)
+                l1s.append(l1)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
                         counter, losses_match[-1]))
@@ -645,6 +646,8 @@ class WAE(object):
                         counter, losses[-1]))
                     logging.error('Reconstruction loss after %d steps: %f' % (
                         counter, losses_rec[-1]))
+                    logging.error('Layer 1 activations after {} steps: {}'.format(
+                        counter, l1s[-1]))
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
