@@ -55,7 +55,7 @@ class WAE(object):
             if opts['e_noise'] == 'implicit':
                 self.encoded, self.encoder_A = res
             else:
-                self.encoded, self.l1, self.l2, self.l3, self.l4, _ = res
+                self.encoded, self.l1, self.l2, self.l3, self.l4, self.to_monitor, _ = res
         elif opts['e_noise'] == 'gaussian':
             # Encoder outputs means and variances of Gaussian
             enc_mean, enc_sigmas = res[0]
@@ -511,6 +511,7 @@ class WAE(object):
         l2s = []
         l3s = []
         l4s = []
+        to_monitors = []
         ld1s = []
         ld2s = []
         ld3s = []
@@ -603,8 +604,8 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [a0, l1, l2, l3, l4, ld1, ld2, ld3, _, loss, loss_rec, loss_match] = self.sess.run(
-                    [self.sample_points, self.l1, self.l2, self.l3, self.l4,
+                [a0, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, _, loss, loss_rec, loss_match] = self.sess.run(
+                    [self.sample_points, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
                      self.ld1, self.ld2, self.ld3, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
@@ -650,6 +651,7 @@ class WAE(object):
                 l2s.append(l2)
                 l3s.append(l3)
                 l4s.append(l4)
+                to_monitors.append(to_monitor)
                 ld1s.append(ld1)
                 ld2s.append(ld2)
                 ld3s.append(ld3)
@@ -667,6 +669,8 @@ class WAE(object):
                     np.save('l2_iter{}'.format(counter), l2s[-1])
                     np.save('l3_iter{}'.format(counter), l3s[-1])
                     np.save('l4_iter{}'.format(counter), l4s[-1])
+                    for key, val in to_monitors[-1].items():
+                        np.save('{}_iter{}'.format(key, counter), val)
                     np.save('ld1_iter{}'.format(counter), ld1s[-1])
                     np.save('ld2_iter{}'.format(counter), ld2s[-1])
                     np.save('ld3_iter{}'.format(counter), ld3s[-1])
