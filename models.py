@@ -43,7 +43,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
                 res = (mean, log_sigmas)
         elif opts['e_arch'] == 'dcgan':
             # Fully convolutional architecture similar to DCGAN
-            res, l1 = dcgan_encoder(opts, inputs, is_training, reuse)
+            res, l1, l2, l3, l4 = dcgan_encoder(opts, inputs, is_training, reuse)
         elif opts['e_arch'] == 'ali':
             # Architecture smilar to "Adversarially learned inference" paper
             res = ali_encoder(opts, inputs, is_training, reuse)
@@ -73,7 +73,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
             # Mapping back to the [-1,1]^zdim box
             res = tf.nn.tanh(res)
 
-        return res, l1, noise_matrix
+        return res, l1, l2, l3, l4, noise_matrix
 
 def decoder(opts, noise, reuse=False, is_training=True):
     assert opts['dataset'] in datashapes, 'Unknown dataset!'
@@ -100,7 +100,7 @@ def decoder(opts, noise, reuse=False, is_training=True):
                 return tf.nn.sigmoid(out), out
         elif opts['g_arch'] in ['dcgan', 'dcgan_mod']:
             # Fully convolutional architecture similar to DCGAN
-            res = dcgan_decoder(opts, noise, is_training, reuse)
+            res1, res2, ld1, ld2, ld3 = dcgan_decoder(opts, noise, is_training, reuse)
         elif opts['g_arch'] == 'ali':
             # Architecture smilar to "Adversarially learned inference" paper
             res = ali_decoder(opts, noise, is_training, reuse)
@@ -110,7 +110,7 @@ def decoder(opts, noise, reuse=False, is_training=True):
         else:
             raise ValueError('%s Unknown decoder architecture' % opts['g_arch'])
 
-        return res
+        return res1, res2, ld1, ld2, ld3
 
 def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
     num_units = opts['e_num_filters']
@@ -122,13 +122,19 @@ def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
                              scope='h%d_conv' % i)
         if i == 0:
             l1 = layer_x
+        if i == 1:
+            l2 = layer_x
+        if i == 2: 
+            l3 = layer_x
+        if i == 3: 
+            l4 = layer_x
         if opts['batch_norm']:
             layer_x = ops.batch_norm(opts, layer_x, is_training,
                                      reuse, scope='h%d_bn' % i)
         layer_x = tf.nn.relu(layer_x)
     if opts['e_noise'] != 'gaussian':
         res = ops.linear(opts, layer_x, opts['zdim'], scope='hfinal_lin')
-        return res, l1
+        return res, l1, l2, l3, l4
     else:
         mean = ops.linear(opts, layer_x, opts['zdim'], scope='mean_lin')
         log_sigmas = ops.linear(opts, layer_x,
@@ -236,6 +242,12 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
                       width * scale, num_units / scale]
         layer_x = ops.deconv2d(opts, layer_x, _out_shape,
                                scope='h%d_deconv' % i)
+        if i == 0:
+            ld1 = layer_x
+        if i == 1:
+            ld2 = layer_x
+        if i == 2: 
+            ld3 = layer_x
         if opts['batch_norm']:
             layer_x = ops.batch_norm(opts, layer_x,
                                      is_training, reuse, scope='h%d_bn' % i)
@@ -248,7 +260,7 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
         last_h = ops.deconv2d(
             opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hfinal_deconv')
     if opts['input_normalize_sym']:
-        return tf.nn.tanh(last_h), last_h
+        return tf.nn.tanh(last_h), last_h, ld1, ld2, ld3
     else:
         return tf.nn.sigmoid(last_h), last_h
 

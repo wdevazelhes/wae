@@ -106,7 +106,7 @@ def conv2d(opts, input_, output_dim, d_h=2, d_w=2, scope=None,
     k_w = k_h
 
     assert len(shape) == 4, 'Conv2d works only with 4d tensors.'
-
+    tf.set_random_seed(0)
     with tf.variable_scope(scope or 'conv2d'):
         w = tf.get_variable(
             'filter', [k_h, k_w, shape[-1], output_dim],

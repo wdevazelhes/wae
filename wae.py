@@ -55,7 +55,7 @@ class WAE(object):
             if opts['e_noise'] == 'implicit':
                 self.encoded, self.encoder_A = res
             else:
-                self.encoded, self.l1, _ = res
+                self.encoded, self.l1, self.l2, self.l3, self.l4, _ = res
         elif opts['e_noise'] == 'gaussian':
             # Encoder outputs means and variances of Gaussian
             enc_mean, enc_sigmas = res[0]
@@ -72,12 +72,12 @@ class WAE(object):
             #     eps, tf.exp(self.enc_sigmas / 2.))
 
         # Decode the points encoded above (i.e. reconstruct)
-        self.reconstructed, self.reconstructed_logits = \
+        self.reconstructed, self.reconstructed_logits, self.ld1, self.ld2, self.ld3 = \
                 decoder(opts, noise=self.encoded,
                         is_training=self.is_training)
 
         # Decode the content of sample_noise
-        self.decoded, self.decoded_logits = \
+        self.decoded, self.decoded_logits, _, _, _ = \
             decoder(opts, reuse=True, noise=self.sample_noise,
                     is_training=self.is_training)
 
@@ -508,6 +508,12 @@ class WAE(object):
         losses_rec = []
         losses_match = []
         l1s = []
+        l2s = []
+        l3s = []
+        l4s = []
+        ld1s = []
+        ld2s = []
+        ld3s = []
         a0s = []
         blurr_vals = []
         encoding_changes = []
@@ -597,8 +603,9 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [a0, l1, _, loss, loss_rec, loss_match] = self.sess.run(
-                    [self.sample_points, self.l1, self.ae_opt,
+                [a0, l1, l2, l3, l4, ld1, ld2, ld3, _, loss, loss_rec, loss_match] = self.sess.run(
+                    [self.sample_points, self.l1, self.l2, self.l3, self.l4,
+                     self.ld1, self.ld2, self.ld3, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
                      self.penalty],
@@ -640,6 +647,12 @@ class WAE(object):
                 losses_rec.append(loss_rec)
                 losses_match.append(loss_match)
                 l1s.append(l1)
+                l2s.append(l2)
+                l3s.append(l3)
+                l4s.append(l4)
+                ld1s.append(ld1)
+                ld2s.append(ld2)
+                ld3s.append(ld3)
                 a0s.append(a0)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
@@ -651,6 +664,12 @@ class WAE(object):
                     logging.error('Layer 1 activations after {} steps: {}'.format(
                         counter, l1s[-1]))
                     np.save('l1_iter{}'.format(counter), l1s[-1])
+                    np.save('l2_iter{}'.format(counter), l2s[-1])
+                    np.save('l3_iter{}'.format(counter), l3s[-1])
+                    np.save('l4_iter{}'.format(counter), l4s[-1])
+                    np.save('ld1_iter{}'.format(counter), ld1s[-1])
+                    np.save('ld2_iter{}'.format(counter), ld2s[-1])
+                    np.save('ld3_iter{}'.format(counter), ld3s[-1])
                     np.save('a0_iter{}'.format(counter), a0s[-1])
 
                 # Update regularizer if necessary
