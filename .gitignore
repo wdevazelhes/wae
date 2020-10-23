@@ -1,1 +1,4 @@
 celebA/*
+*.npy
+*.pyc
+results_celeba/

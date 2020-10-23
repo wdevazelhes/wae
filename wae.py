@@ -508,6 +508,7 @@ class WAE(object):
         losses_rec = []
         losses_match = []
         l1s = []
+        a0s = []
         blurr_vals = []
         encoding_changes = []
         enc_test_prev = None
@@ -596,8 +597,8 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [l1, _, loss, loss_rec, loss_match] = self.sess.run(
-                    [self.l1, self.ae_opt,
+                [a0, l1, _, loss, loss_rec, loss_match] = self.sess.run(
+                    [self.sample_points, self.l1, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
                      self.penalty],
@@ -639,6 +640,7 @@ class WAE(object):
                 losses_rec.append(loss_rec)
                 losses_match.append(loss_match)
                 l1s.append(l1)
+                a0s.append(a0)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
                         counter, losses_match[-1]))
@@ -648,6 +650,8 @@ class WAE(object):
                         counter, losses_rec[-1]))
                     logging.error('Layer 1 activations after {} steps: {}'.format(
                         counter, l1s[-1]))
+                    np.save('l1_iter{}'.format(counter), l1s[-1])
+                    np.save('a0_iter{}'.format(counter), a0s[-1])
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
