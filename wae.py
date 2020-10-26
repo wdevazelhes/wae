@@ -72,7 +72,7 @@ class WAE(object):
             #     eps, tf.exp(self.enc_sigmas / 2.))
 
         # Decode the points encoded above (i.e. reconstruct)
-        self.reconstructed, self.reconstructed_logits, self.ld1, self.ld2, self.ld3 = \
+        self.reconstructed, self.reconstructed_logits, self.ld1, self.ld2, self.ld3, self.ld4 = \
                 decoder(opts, noise=self.encoded,
                         is_training=self.is_training)
 
@@ -515,6 +515,7 @@ class WAE(object):
         ld1s = []
         ld2s = []
         ld3s = []
+        ld4s = []
         a0s = []
         blurr_vals = []
         encoding_changes = []
@@ -604,9 +605,9 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [a0, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, _, loss, loss_rec, loss_match] = self.sess.run(
+                [a0, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, ld4, _, loss, loss_rec, loss_match] = self.sess.run(
                     [self.sample_points, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
-                     self.ld1, self.ld2, self.ld3, self.ae_opt,
+                     self.ld1, self.ld2, self.ld3, self.ld4, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
                      self.penalty],
@@ -655,6 +656,7 @@ class WAE(object):
                 ld1s.append(ld1)
                 ld2s.append(ld2)
                 ld3s.append(ld3)
+                ld3s.append(ld4)
                 a0s.append(a0)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
@@ -674,6 +676,7 @@ class WAE(object):
                     np.save('ld1_iter{}'.format(counter), ld1s[-1])
                     np.save('ld2_iter{}'.format(counter), ld2s[-1])
                     np.save('ld3_iter{}'.format(counter), ld3s[-1])
+                    np.save('ld4_iter{}'.format(counter), ld4s[-1])
                     np.save('a0_iter{}'.format(counter), a0s[-1])
 
                 # Update regularizer if necessary
