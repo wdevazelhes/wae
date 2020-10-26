@@ -100,7 +100,7 @@ def decoder(opts, noise, reuse=False, is_training=True):
                 return tf.nn.sigmoid(out), out
         elif opts['g_arch'] in ['dcgan', 'dcgan_mod']:
             # Fully convolutional architecture similar to DCGAN
-            res1, res2, ld1, ld2, ld3, ld4 = dcgan_decoder(opts, noise, is_training, reuse)
+            res1, res2, ld1, ld2, ld3, ld4, noo = dcgan_decoder(opts, noise, is_training, reuse)
         elif opts['g_arch'] == 'ali':
             # Architecture smilar to "Adversarially learned inference" paper
             res = ali_decoder(opts, noise, is_training, reuse)
@@ -110,7 +110,7 @@ def decoder(opts, noise, reuse=False, is_training=True):
         else:
             raise ValueError('%s Unknown decoder architecture' % opts['g_arch'])
 
-        return res1, res2, ld1, ld2, ld3, ld4
+        return res1, res2, ld1, ld2, ld3, ld4, noo
 
 def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
     num_units = opts['e_num_filters']
@@ -233,7 +233,7 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
     elif opts['g_arch'] == 'dcgan_mod':
         height = output_shape[0] / 2**(num_layers - 1)
         width = output_shape[1] / 2**(num_layers - 1)
-
+    noo = noise
     h0 = ops.linear(
         opts, noise, num_units * height * width, scope='h0_lin')
     ld1 = h0
@@ -264,7 +264,7 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
         last_h = ops.deconv2d(
             opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hfinal_deconv')
     if opts['input_normalize_sym']:
-        return tf.nn.tanh(last_h), last_h, ld1, ld2, ld3, ld4
+        return tf.nn.tanh(last_h), last_h, ld1, ld2, ld3, ld4, noo
     else:
         return tf.nn.sigmoid(last_h), last_h
 
