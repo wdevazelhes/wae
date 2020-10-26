@@ -656,7 +656,7 @@ class WAE(object):
                 ld1s.append(ld1)
                 ld2s.append(ld2)
                 ld3s.append(ld3)
-                ld3s.append(ld4)
+                ld4s.append(ld4)
                 a0s.append(a0)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
