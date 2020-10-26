@@ -77,7 +77,7 @@ class WAE(object):
                         is_training=self.is_training)
 
         # Decode the content of sample_noise
-        self.decoded, self.decoded_logits, _, _, _ = \
+        self.decoded, self.decoded_logits, _, _, _, _ = \
             decoder(opts, reuse=True, noise=self.sample_noise,
                     is_training=self.is_training)
 
