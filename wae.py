@@ -592,7 +592,7 @@ class WAE(object):
                 data_ids = slice(it * opts['batch_size'], (it + 1) * opts['batch_size'])
                 # TODO: check that the data here is the same as in our WAE
                 batch_images = data.data[data_ids].astype(np.float)
-                print(batch_images[0, 0, 0])
+                #print(batch_images[0, 0, 0])
                 batch_noise = self.sample_pz(rng, opts['batch_size'])
 
                 # Update encoder and decoder
@@ -669,8 +669,8 @@ class WAE(object):
                         counter, losses[-1]))
                     logging.error('Reconstruction loss after %d steps: %f' % (
                         counter, losses_rec[-1]))
-                    logging.error('Layer 1 activations after {} steps: {}'.format(
-                        counter, l1s[-1]))
+                    # logging.error('Layer 1 activations after {} steps: {}'.format(
+                        # counter, l1s[-1]))
                     np.save('l1_iter{}'.format(counter), l1s[-1])
                     np.save('l2_iter{}'.format(counter), l2s[-1])
                     np.save('l3_iter{}'.format(counter), l3s[-1])

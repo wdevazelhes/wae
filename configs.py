@@ -17,7 +17,7 @@ config_celebA['celebA_crop'] = 'closecrop' # closecrop, resizecrop
 
 config_celebA['optimizer'] = 'adam' # adam, sgd
 config_celebA['adam_beta1'] = 0.5
-config_celebA['lr'] = 0.0005 #0.001 for WAE-MMD and 0.0003 for WAE-GAN
+config_celebA['lr'] = 0.001 #0.001 for WAE-MMD and 0.0003 for WAE-GAN
 config_celebA['lr_adv'] = 0.001
 #config_celebA['lr_schedule'] = 'manual_smooth' #manual, plateau, or a number
 config_celebA['lr_schedule'] = 'manual' #manual, plateau, or a number
