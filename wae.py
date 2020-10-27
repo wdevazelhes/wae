@@ -507,6 +507,8 @@ class WAE(object):
         losses = []
         losses_rec = []
         losses_match = []
+        encodeds = []
+        sample_noises = []
         l1s = []
         l2s = []
         l3s = []
@@ -607,8 +609,8 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [a0, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, ld4, reconstructed, noo, _, loss, loss_rec, loss_match] = self.sess.run(
-                    [self.sample_points, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
+                [a0, sample_noise, encoded, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, ld4, reconstructed, noo, _, loss, loss_rec, loss_match] = self.sess.run(
+                    [self.sample_points, self.sample_noise, self.encoded, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
                      self.ld1, self.ld2, self.ld3, self.ld4, self.reconstructed, self.noo, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
@@ -650,6 +652,8 @@ class WAE(object):
                 losses.append(loss)
                 losses_rec.append(loss_rec)
                 losses_match.append(loss_match)
+                encodeds.append(encoded)
+                sample_noises.append(sample_noise)
                 l1s.append(l1)
                 l2s.append(l2)
                 l3s.append(l3)
@@ -671,6 +675,8 @@ class WAE(object):
                         counter, losses_rec[-1]))
                     # logging.error('Layer 1 activations after {} steps: {}'.format(
                         # counter, l1s[-1]))
+                    np.save('encoded_iter{}'.format(counter), encodeds[-1])
+                    np.save('sample_noise_iter{}'.format(counter), sample_noises[-1])
                     np.save('l1_iter{}'.format(counter), l1s[-1])
                     np.save('l2_iter{}'.format(counter), l2s[-1])
                     np.save('l3_iter{}'.format(counter), l3s[-1])
