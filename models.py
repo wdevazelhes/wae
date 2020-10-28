@@ -9,6 +9,10 @@ tf.set_random_seed(0)
 random.seed(0)
 np.random.seed(0)
 
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 def encoder(opts, inputs, reuse=False, is_training=False):
 
     if opts['e_noise'] == 'add_noise':
@@ -100,7 +104,7 @@ def decoder(opts, noise, reuse=False, is_training=True):
                 return tf.nn.sigmoid(out), out
         elif opts['g_arch'] in ['dcgan', 'dcgan_mod']:
             # Fully convolutional architecture similar to DCGAN
-            res1, res2, ld1, ld2, ld3, ld4, noo = dcgan_decoder(opts, noise, is_training, reuse)
+            res1, res2, ld1, ld2, ld3, ld4, noo, to_monitor_dec = dcgan_decoder(opts, noise, is_training, reuse)
         elif opts['g_arch'] == 'ali':
             # Architecture smilar to "Adversarially learned inference" paper
             res = ali_decoder(opts, noise, is_training, reuse)
@@ -110,7 +114,7 @@ def decoder(opts, noise, reuse=False, is_training=True):
         else:
             raise ValueError('%s Unknown decoder architecture' % opts['g_arch'])
 
-        return res1, res2, ld1, ld2, ld3, ld4, noo
+        return res1, res2, ld1, ld2, ld3, ld4, noo, to_monitor_dec
 
 def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
     num_units = opts['e_num_filters']
@@ -119,11 +123,13 @@ def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
     to_monitor = dict()
     for i in xrange(num_layers):
         scale = 2**(num_layers - i - 1)
-        layer_x = ops.conv2d(opts, layer_x, num_units / scale,
+        layer_x, w, b = ops.conv2d(opts, layer_x, num_units / scale,
                              scope='h%d_conv' % i)
         # layer_x = tf.layers.Conv2D(num_units/scale, (5, 5), strides=(2, 2), 
         #                            kernel_initializer=tf.truncated_normal_initializer(stddev=opts['init_std'], seed=0), 
         #                            bias_initializer=tf.constant_initializer(opts['init_bias']), padding='SAME')(layer_x)
+        to_monitor['we{}'.format(i)] = w
+        to_monitor['be{}'.format(i)] = b
         if i == 0:
             l1 = layer_x
         if i == 1:
@@ -230,6 +236,7 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
     num_units = opts['g_num_filters']
     batch_size = tf.shape(noise)[0]
     num_layers = opts['g_num_layers']
+    to_monitor_dec = dict()
     if opts['g_arch'] == 'dcgan':
         height = output_shape[0] / 2**num_layers
         width = output_shape[1] / 2**num_layers
@@ -237,8 +244,10 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
         height = output_shape[0] / 2**(num_layers - 1)
         width = output_shape[1] / 2**(num_layers - 1)
     noo = noise
-    h0 = ops.linear(
-        opts, noise, num_units * height * width, scope='h0_lin')
+    h0, w, b = ops.linear(
+        opts, noise, num_units * height * width, scope='h0_lin', return_weights=True)
+    to_monitor_dec['wd{}'.format(0)] = w
+    to_monitor_dec['bd{}'.format(0)] = b
     ld1 = h0
     h0 = tf.reshape(h0, [-1, height, width, num_units])
     h0 = tf.nn.relu(h0)
@@ -247,8 +256,10 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
         scale = 2**(i + 1)
         _out_shape = [batch_size, height * scale,
                       width * scale, num_units / scale]
-        layer_x = ops.deconv2d(opts, layer_x, _out_shape,
+        layer_x, w, b = ops.deconv2d(opts, layer_x, _out_shape,
                                scope='h%d_deconv' % i)
+        to_monitor_dec['wd{}'.format(i+1)] = w
+        to_monitor_dec['bd{}'.format(i+1)] = b
         if i == 0:
             ld2 = layer_x
         if i == 1:
@@ -261,13 +272,13 @@ def dcgan_decoder(opts, noise, is_training=False, reuse=False):
         layer_x = tf.nn.relu(layer_x)
     _out_shape = [batch_size] + list(output_shape)
     if opts['g_arch'] == 'dcgan':
-        last_h = ops.deconv2d(
+        last_h, _, _ = ops.deconv2d(
             opts, layer_x, _out_shape, scope='hfinal_deconv')
     elif opts['g_arch'] == 'dcgan_mod':
-        last_h = ops.deconv2d(
+        last_h, _, _ = ops.deconv2d(
             opts, layer_x, _out_shape, d_h=1, d_w=1, scope='hfinal_deconv')
     if opts['input_normalize_sym']:
-        return tf.nn.tanh(last_h), last_h, ld1, ld2, ld3, ld4, noo
+        return tf.nn.tanh(last_h), last_h, ld1, ld2, ld3, ld4, noo, to_monitor_dec
     else:
         return tf.nn.sigmoid(last_h), last_h
 

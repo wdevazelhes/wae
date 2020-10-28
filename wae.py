@@ -23,6 +23,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 class WAE(object):
 
     def __init__(self, opts, train_size=0):
@@ -72,12 +76,12 @@ class WAE(object):
             #     eps, tf.exp(self.enc_sigmas / 2.))
 
         # Decode the points encoded above (i.e. reconstruct)
-        self.reconstructed, self.reconstructed_logits, self.ld1, self.ld2, self.ld3, self.ld4, self.noo = \
+        self.reconstructed, self.reconstructed_logits, self.ld1, self.ld2, self.ld3, self.ld4, self.noo, self.to_monitor_dec = \
                 decoder(opts, noise=self.encoded,
                         is_training=self.is_training)
 
         # Decode the content of sample_noise
-        self.decoded, self.decoded_logits, _, _, _, _, _ = \
+        self.decoded, self.decoded_logits, _, _, _, _, _, _ = \
             decoder(opts, reuse=True, noise=self.sample_noise,
                     is_training=self.is_training)
 
@@ -460,7 +464,6 @@ class WAE(object):
         opts = self.opts
         tf.set_random_seed(0)
         with self.sess.as_default(), self.sess.graph.as_default():
-	    tf.set_random_seed(0)
             sample = self.proj_sample
             optim = self.proj_opt
             loss = self.proj_loss
@@ -520,6 +523,7 @@ class WAE(object):
         ld4s = []
         reconstructeds = []
         noos = []
+        to_monitor_decs = []
         a0s = []
         blurr_vals = []
         encoding_changes = []
@@ -609,9 +613,9 @@ class WAE(object):
                 for (ph, val) in extra_cost_weights:
                     feed_d[ph] = val
 
-                [a0, sample_noise, encoded, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, ld4, reconstructed, noo, _, loss, loss_rec, loss_match] = self.sess.run(
+                [a0, sample_noise, encoded, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, ld4, reconstructed, noo, to_monitor_dec, _, loss, loss_rec, loss_match] = self.sess.run(
                     [self.sample_points, self.sample_noise, self.encoded, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
-                     self.ld1, self.ld2, self.ld3, self.ld4, self.reconstructed, self.noo, self.ae_opt,
+                     self.ld1, self.ld2, self.ld3, self.ld4, self.reconstructed, self.noo, self.to_monitor_dec, self.ae_opt,
                      self.wae_objective,
                      self.loss_reconstruct,
                      self.penalty],
@@ -665,6 +669,7 @@ class WAE(object):
                 ld4s.append(ld4)
                 reconstructeds.append(reconstructed)
                 noos.append(noo)
+                to_monitor_decs.append(to_monitor_dec)
                 a0s.append(a0)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
@@ -682,6 +687,9 @@ class WAE(object):
                     np.save('l3_{}'.format(counter), l3s[-1])
                     np.save('l4_{}'.format(counter), l4s[-1])
                     for key, val in to_monitors[-1].items():
+
+                        np.save('{}_{}'.format(key, counter), val)
+                    for key, val in to_monitor_decs[-1].items():
                         np.save('{}_{}'.format(key, counter), val)
                     np.save('ld1_{}'.format(counter), ld1s[-1])
                     np.save('ld2_{}'.format(counter), ld2s[-1])

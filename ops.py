@@ -12,6 +12,12 @@ import logging
 import tensorflow as tf
 import random
 import numpy as np
+
+
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 tf.set_random_seed(0)
 random.seed(0)
 np.random.seed(0)
@@ -23,11 +29,15 @@ def batch_norm(opts, _input, is_train, reuse, scope, scale=True):
     """Batch normalization based on tf.contrib.layers.
 
     """
-    return tf.contrib.layers.batch_norm(
+    return tf.layers.batch_normalization(
         _input, center=True, scale=scale,
-        epsilon=opts['batch_norm_eps'], decay=opts['batch_norm_decay'],
-        is_training=is_train, reuse=reuse, updates_collections=None,
-        scope=scope, fused=False)
+        epsilon=opts['batch_norm_eps'], momentum=opts['batch_norm_decay'],
+        training=is_train, reuse=reuse, fused=False, name=scope)
+    # return tf.contrib.layers.batch_norm(
+    #     _input, center=True, scale=scale,
+    #     epsilon=opts['batch_norm_eps'], decay=opts['batch_norm_decay'],
+    #     is_training=is_train, reuse=reuse, updates_collections=None,
+    #     scope=scope, fused=False)
 
 def upsample_nn(input_, new_size, scope=None, reuse=None):
     """NN up-sampling
@@ -47,7 +57,7 @@ def downsample(input_, d_h=2, d_w=2, conv_filters_dim=None, scope=None, reuse=No
 
     return result
 
-def linear(opts, input_, output_dim, scope=None, init='normal', reuse=None):
+def linear(opts, input_, output_dim, scope=None, init='normal', reuse=None, return_weights=False):
     """Fully connected linear layer.
 
     Args:
@@ -84,8 +94,10 @@ def linear(opts, input_, output_dim, scope=None, init='normal', reuse=None):
             "b", [output_dim],
             initializer=tf.constant_initializer(bias_start))
 
-
-    return tf.matmul(input_, matrix) + bias
+    if return_weights:
+        return tf.matmul(input_, matrix) + bias, matrix, bias
+    else:
+        return tf.matmul(input_, matrix) + bias
 
 
 def conv2d(opts, input_, output_dim, d_h=2, d_w=2, scope=None,
@@ -119,7 +131,7 @@ def conv2d(opts, input_, output_dim, d_h=2, d_w=2, scope=None,
             initializer=tf.constant_initializer(bias_start))
         conv = tf.nn.bias_add(conv, biases)
 
-    return conv
+    return conv, w, biases
 
 def deconv2d(opts, input_, output_shape, d_h=2, d_w=2, scope=None, conv_filters_dim=None, padding='SAME'):
     """Transposed convolution (fractional stride convolution) layer.
@@ -149,7 +161,7 @@ def deconv2d(opts, input_, output_shape, d_h=2, d_w=2, scope=None, conv_filters_
         deconv = tf.nn.bias_add(deconv, biases)
 
 
-    return deconv
+    return deconv, w, biases
 
 
 def log_sum_exp(logits):

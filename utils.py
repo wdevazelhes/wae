@@ -16,6 +16,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 class ArraySaver(object):
     """A simple class helping with saving/loading numpy arrays from files.
 
