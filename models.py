@@ -121,6 +121,9 @@ def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
         scale = 2**(num_layers - i - 1)
         layer_x = ops.conv2d(opts, layer_x, num_units / scale,
                              scope='h%d_conv' % i)
+        # layer_x = tf.layers.Conv2D(num_units/scale, (5, 5), strides=(2, 2), 
+        #                            kernel_initializer=tf.truncated_normal_initializer(stddev=opts['init_std'], seed=0), 
+        #                            bias_initializer=tf.constant_initializer(opts['init_bias']), padding='SAME')(layer_x)
         if i == 0:
             l1 = layer_x
         if i == 1:
