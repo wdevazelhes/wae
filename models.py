@@ -145,6 +145,7 @@ def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
             # layer_x = tf.keras.layers.BatchNormalization(epsilon=opts['batch_norm_eps'], 
                                     momentum=opts['batch_norm_decay'], 
                                     fused=False, name='h%d_bn'%i)(layer_x, training=is_training)
+                                    # forcing is_training to True doesn't change anything
 
             # layer_x = ops.batch_norm(opts, layer_x, is_training,
                                     #  reuse, scope='h%d_bn' % i)
