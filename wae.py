@@ -22,6 +22,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import tensorflow as tf
+# import tensorflow.keras.backend as K
+
 
 
 import tensorflow.compat.v1 as tf
@@ -233,7 +235,7 @@ class WAE(object):
         else:
             assert False, 'Unknown penalty %s' % opts['z_test']
         return loss_match, loss_gan
-
+    
     def mmd_penalty(self, sample_qz, sample_pz):
         opts = self.opts
         sigma2_p = opts['pz_scale'] ** 2
@@ -375,6 +377,7 @@ class WAE(object):
             return tf.train.GradientDescentOptimizer(lr)
         elif opts["optimizer"] == "adam":
             return tf.train.AdamOptimizer(lr, beta1=opts["adam_beta1"])
+            # return tf.keras.optimizers.Adam(learning_rate=lr, beta_1=opts["adam_beta1"], epsilon=1e-8)
         else:
             assert False, 'Unknown optimizer.'
 
@@ -597,7 +600,7 @@ class WAE(object):
                 #    train_size, opts['batch_size'], replace=False)
                 data_ids = slice(it * opts['batch_size'], (it + 1) * opts['batch_size'])
                 # TODO: check that the data here is the same as in our WAE
-                batch_images = data.data[data_ids].astype(np.float)
+                batch_images = data.data[data_ids].astype(np.float32)
                 #print(batch_images[0, 0, 0])
                 batch_noise = self.sample_pz(rng, opts['batch_size'])
                 
