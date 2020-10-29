@@ -20,13 +20,14 @@ import sys
 import tensorflow as tf
 import random
 import numpy as np
-tf.set_random_seed(0)
-random.seed(0)
-np.random.seed(0)
 
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+
+tf.set_random_seed(0)
+random.seed(0)
+np.random.seed(0)
 
 datashapes = {}
 datashapes['mnist'] = [28, 28, 1]

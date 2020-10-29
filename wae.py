@@ -589,7 +589,7 @@ class WAE(object):
 
             # Iterate over batches
             np.random.seed(0)
-            rng = np.random.RandomState(0)
+            rng = np.random.RandomState(0)    
             for it in xrange(batches_num):
 
                 # Sample batches of data points and Pz noise
@@ -600,9 +600,36 @@ class WAE(object):
                 batch_images = data.data[data_ids].astype(np.float)
                 #print(batch_images[0, 0, 0])
                 batch_noise = self.sample_pz(rng, opts['batch_size'])
+                
+                # compute forward pass for logging: 
+                
+                # feed_d = {
+                # self.sample_points: batch_images,
+                # self.sample_noise: batch_noise,
+                # self.lr_decay: decay,
+                # self.wae_lambda: wae_lambda,
+                # self.is_training: False}
 
-                # Update encoder and decoder
+                # for (ph, val) in extra_cost_weights:
+                #     feed_d[ph] = val
 
+                # [_, _, _, _, _, _, _, to_monitor, _, _, _, _, _, _, to_monitor_dec, _, _, _, _] = tf.Session().run(
+                #     [self.sample_points, self.sample_noise, self.encoded, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
+                #         self.ld1, self.ld2, self.ld3, self.ld4, self.reconstructed, self.noo, self.to_monitor_dec, self.ae_opt,
+                #         self.wae_objective,
+                #         self.loss_reconstruct,
+                #         self.penalty],
+                #     feed_dict=feed_d)
+                
+                # to_save_dic_e = dict()
+                # to_save_dic_d = dict()
+                # for i in range(4):
+                #     for key in ['we', 'be']:
+                #         to_save_dic_e[key+str(i)] = to_monitor[key+str(i)]
+                #     for key in ['wd', 'bd']:
+                #         to_save_dic_d[key+str(i)] = to_monitor_dec[key+str(i)]
+
+                # # Update encoder and decoder
                 feed_d = {
                     self.sample_points: batch_images,
                     self.sample_noise: batch_noise,
@@ -686,10 +713,15 @@ class WAE(object):
                     np.save('l2_{}'.format(counter), l2s[-1])
                     np.save('l3_{}'.format(counter), l3s[-1])
                     np.save('l4_{}'.format(counter), l4s[-1])
-                    for key, val in to_monitors[-1].items():
-
+                    to_monitor_print = to_monitors[-1]
+                    # for key, _ in to_save_dic_e.items():
+                        # to_monitor_print[key] = to_save_dic_e[key]
+                    for key, val in to_monitor_print.items():
                         np.save('{}_{}'.format(key, counter), val)
-                    for key, val in to_monitor_decs[-1].items():
+                    to_monitor_dec_print = to_monitor_decs[-1]
+                    # for key, _ in to_save_dic_d.items():
+                        # to_monitor_dec_print[key] = to_save_dic_d[key]
+                    for key, val in to_monitor_dec_print.items():
                         np.save('{}_{}'.format(key, counter), val)
                     np.save('ld1_{}'.format(counter), ld1s[-1])
                     np.save('ld2_{}'.format(counter), ld2s[-1])

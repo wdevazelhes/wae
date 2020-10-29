@@ -5,13 +5,15 @@ from datahandler import datashapes
 import tensorflow as tf
 import random
 import numpy as np
-tf.set_random_seed(0)
-random.seed(0)
-np.random.seed(0)
+
 
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+
+tf.set_random_seed(0)
+random.seed(0)
+np.random.seed(0)
 
 def encoder(opts, inputs, reuse=False, is_training=False):
 
@@ -139,8 +141,13 @@ def dcgan_encoder(opts, inputs, is_training=False, reuse=False):
         if i == 3: 
             l4 = layer_x
         if opts['batch_norm']:
-            layer_x = ops.batch_norm(opts, layer_x, is_training,
-                                     reuse, scope='h%d_bn' % i)
+            layer_x = tf.keras.layers.BatchNormalization(epsilon=opts['batch_norm_eps'], 
+            # layer_x = tf.keras.layers.BatchNormalization(epsilon=opts['batch_norm_eps'], 
+                                    momentum=opts['batch_norm_decay'], 
+                                    fused=False, name='h%d_bn'%i)(layer_x, training=is_training)
+
+            # layer_x = ops.batch_norm(opts, layer_x, is_training,
+                                    #  reuse, scope='h%d_bn' % i)
             if i == 0:
                 to_monitor['l1_bn'] = layer_x
         layer_x = tf.nn.relu(layer_x)
