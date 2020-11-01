@@ -93,7 +93,7 @@ class WAE(object):
         self.loss_reconstruct = self.reconstruction_loss(
             self.opts, self.sample_points, self.reconstructed)
         self.wae_objective = self.loss_reconstruct + \
-                         self.wae_lambda * self.penalty
+                         100 * self.penalty
         # Extra costs if any
         if 'w_aef' in opts and opts['w_aef'] > 0:
             improved_wae.add_aefixedpoint_cost(opts, self)
@@ -236,7 +236,7 @@ class WAE(object):
             assert False, 'Unknown penalty %s' % opts['z_test']
         return loss_match, loss_gan
     
-    def mmd_penalty(self, sample_qz, sample_pz):
+    def mmd_penalty_bis(self, sample_qz, sample_pz):
         opts = self.opts
         sigma2_p = opts['pz_scale'] ** 2
         kernel = opts['mmd_kernel']
@@ -308,12 +308,72 @@ class WAE(object):
                 C = Cbase * scale
                 res1 = C / (C + distances_qz)
                 res1 += C / (C + distances_pz)
-                res1 = tf.multiply(res1, 1. - tf.eye(n))
+                # res1 = tf.multiply(res1, 1. - tf.eye(n))
+                res1 = tf.linalg.set_diag(res1, tf.zeros(n))
                 res1 = tf.reduce_sum(res1) / (nf * nf - nf)
                 res2 = C / (C + distances)
                 res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
                 stat += res1 - res2
         return stat
+    
+    def mmd_penalty(self, sample_qz, sample_pz):
+    # def mmd_penalty(sample_qz, sample_pz, batch_size=None, zdim=None):
+        sample_qz = tf.cast(sample_qz, tf.float32)
+        sample_pz = tf.cast(sample_pz, tf.float32)
+        sigma2_p = 1. ** 2  # here to change if we want to change pz_scale
+        n = tf.cast(tf.shape(sample_qz)[0], tf.int32)
+        nf = tf.cast(tf.shape(sample_qz)[0], tf.float32)
+        
+        norms_pz = tf.reduce_sum(tf.square(sample_pz), axis=1, keep_dims=True)
+        dotprods_pz = tf.matmul(sample_pz, sample_pz, transpose_b=True)
+        distances_pz = norms_pz + tf.transpose(norms_pz) - 2. * dotprods_pz
+
+        norms_qz = tf.reduce_sum(tf.square(sample_qz), axis=1, keep_dims=True)
+        dotprods_qz = tf.matmul(sample_qz, sample_qz, transpose_b=True)
+        distances_qz = norms_qz + tf.transpose(norms_qz) - 2. * dotprods_qz
+
+        dotprods = tf.matmul(sample_qz, sample_pz, transpose_b=True)
+        distances = norms_qz + tf.transpose(norms_pz) - 2. * dotprods
+        
+        
+        
+        # norms_pz = K.sum(tf.square(sample_pz), axis=1, keepdims=True)
+        # dotprods_pz = tf.matmul(sample_pz, sample_pz, transpose_b=True)
+        # distances_pz = norms_pz + tf.transpose(norms_pz) - 2. * dotprods_pz
+
+    
+        # norms_qz = K.sum(tf.square(sample_qz), axis=1, keepdims=True)
+        # dotprods_qz = tf.matmul(sample_qz, sample_qz, transpose_b=True)
+        # distances_qz = norms_qz + tf.transpose(norms_qz) - 2. * dotprods_qz
+
+        # dotprods = tf.matmul(sample_qz, sample_pz, transpose_b=True)
+        # distances = norms_qz + tf.transpose(norms_pz) - 2. * dotprods
+        Cbase = 2. * 64 * sigma2_p
+        stat = 0.
+        
+        for scale in [.1, .2, .5, 1., 2., 5., 10.]:
+            C = Cbase * scale
+            res1 = C / (C + distances_qz)
+            res1 += C / (C + distances_pz)
+            
+            
+            res1 = tf.linalg.set_diag(res1, tf.zeros(n))
+            # res1 = K.sum(res1, axis=0)
+            
+            # res_1 = res1 - tf.linalg.tensor_diag()
+            # res1 = tf.multiply(res1, 1. - tf.eye(n))
+
+            
+            res1 = tf.reduce_sum(res1) / (nf * nf - nf)
+            res2 = C / (C + distances)
+            res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
+            stat += res1 - res2
+            
+            # res1 = K.sum(res1) / (nf * nf - nf)
+            # res2 = C / (C + distances)
+            # res2 = K.sum(res2) * 2. / (nf * nf)
+            # stat += res1 - res2
+        return stat 
 
     def gan_penalty(self, sample_qz, sample_pz):
         opts = self.opts
@@ -531,7 +591,7 @@ class WAE(object):
         blurr_vals = []
         encoding_changes = []
         enc_test_prev = None
-        batches_num = data.num_points / opts['batch_size']
+        batches_num = 3
         train_size = data.num_points
         self.num_pics = opts['plot_num_pics']
         rng = np.random.RandomState(0)
@@ -856,6 +916,26 @@ class WAE(object):
                                encoding_changes,
                                'res_e%04d_mb%05d.png' % (epoch, it))
 
+            # outputs a final prediction: 
+            rng_final = np.random.RandomState(0)
+            feed_d = {
+            self.sample_points: rng_final.randn(100, 64, 64, 3).astype(np.float32),
+            self.sample_noise: rng_final.randn(100, 64).astype(np.float32),
+            self.lr_decay: decay,
+            self.wae_lambda: wae_lambda,
+            self.is_training: False}
+
+            # for (ph, val) in extra_cost_weights:
+                # feed_d[ph] = val
+
+            [a0, sample_noise, encoded, l1, l2, l3, l4, to_monitor, ld1, ld2, ld3, ld4, final_prediction, noo, to_monitor_dec, _, loss, loss_rec, loss_match] = self.sess.run(
+                [self.sample_points, self.sample_noise, self.encoded, self.l1, self.l2, self.l3, self.l4, self.to_monitor,
+                    self.ld1, self.ld2, self.ld3, self.ld4, self.reconstructed, self.noo, self.to_monitor_dec, self.ae_opt,
+                    self.wae_objective,
+                    self.loss_reconstruct,
+                    self.penalty],
+                feed_dict=feed_d)
+            np.save('final_prediction', final_prediction)
         # Save the final model
 
         if epoch > 0:

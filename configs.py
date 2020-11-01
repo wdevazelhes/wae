@@ -22,7 +22,7 @@ config_celebA['lr_adv'] = 0.001
 #config_celebA['lr_schedule'] = 'manual_smooth' #manual, plateau, or a number
 config_celebA['lr_schedule'] = 'manual' #manual, plateau, or a number
 config_celebA['batch_size'] = 100
-config_celebA['epoch_num'] = 50
+config_celebA['epoch_num'] = 1
 config_celebA['init_std'] = 0.0099999
 config_celebA['init_bias'] = 0.0
 config_celebA['batch_norm'] = True
@@ -51,7 +51,7 @@ config_celebA['cost'] = 'l2sq' #l2, l2sq, l1
 config_celebA['pz_scale'] = 1.
 config_celebA['z_test'] = 'mmd'
 config_celebA['mmd_kernel'] = 'IMQ' # RBF, IMQ
-config_celebA['lambda'] = 100.
+config_celebA['lambda'] = 100
 config_celebA['lambda_schedule'] = 'constant'
 
 # MNIST config from ICLR paper
