@@ -142,7 +142,7 @@ def deconv2d(opts, input_, output_shape, d_h=2, d_w=2, scope=None, conv_filters_
     shape = input_.get_shape().as_list()
     if conv_filters_dim is None:
         conv_filters_dim = opts['conv_filters_dim']
-    k_h = conv_filters_dim
+    k_h = int(conv_filters_dim)
     k_w = k_h
 
     assert len(shape) == 4, 'Conv2d_transpose works only with 4d tensors.'

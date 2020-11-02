@@ -169,7 +169,7 @@ class Data(object):
                 step = step if step is not None else 1
                 keys = range(start, stop, step)
             else:
-                print type(key)
+                print(type(key))
                 raise Exception('This type of indexing yet not supported for the dataset')
             res = []
             new_keys = []
@@ -308,7 +308,7 @@ class DataHandler(object):
         np.random.seed(0)
         num = opts['toy_dataset_size']
         X = np.zeros((num, opts['toy_dataset_dim'], 1, 1))
-        for idx in xrange(num):
+        for idx in range(num):
             comp_id = np.random.randint(modes_num)
             mean = mixture_means[comp_id]
             cov = mixture_variance * np.identity(opts["toy_dataset_dim"])
@@ -347,7 +347,7 @@ class DataHandler(object):
         np.random.seed(0)
         num = opts['toy_dataset_size']
         X = np.zeros((num, opts['toy_dataset_dim'], 1, 1))
-        for idx in xrange(num):
+        for idx in range(num):
             comp_id = np.random.randint(modes_num)
             mean = mixture_means[comp_id]
             cov = mixture_variance * np.identity(opts["toy_dataset_dim"])
@@ -467,7 +467,7 @@ class DataHandler(object):
             n += test_size
             points = []
             labels = []
-            for _ in xrange(n):
+            for _ in range(n):
                 idx = np.random.randint(len(X))
                 point = X[idx]
                 modes = ['n', 'i', 'sl', 'sr', 'su', 'sd']
@@ -605,7 +605,7 @@ class DataHandler(object):
         num_samples = 162770
 
         datapoint_ids = range(1, num_samples + 1)
-        paths = ['image_{}.jpg'.format(i) for i in xrange(0, num_samples)]
+        paths = ['image_{}.jpg'.format(i) for i in range(0, num_samples)]
         seed = 123
         #random.seed(seed)
         #random.shuffle(paths)

@@ -91,7 +91,7 @@ def improved_sampling(opts):
                 logging.error('Batch %d of %d' % (ibatch + 1, NUM_POINTS / BATCH_SIZE))
                 loss_prev = 1e10
                 init.run()
-                for step in xrange(MAX_GD_STEPS):
+                for step in range(MAX_GD_STEPS):
 
                     # Make a gradient step
                     sess.run(optim, feed_dict={is_training_ph: False})

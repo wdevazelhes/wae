@@ -93,7 +93,7 @@ class WAE(object):
         self.loss_reconstruct = self.reconstruction_loss(
             self.opts, self.sample_points, self.reconstructed)
         self.wae_objective = self.loss_reconstruct + \
-                         100 * self.penalty
+                         self.wae_lambda * self.penalty
         # Extra costs if any
         if 'w_aef' in opts and opts['w_aef'] > 0:
             improved_wae.add_aefixedpoint_cost(opts, self)
@@ -236,7 +236,7 @@ class WAE(object):
             assert False, 'Unknown penalty %s' % opts['z_test']
         return loss_match, loss_gan
     
-    def mmd_penalty_bis(self, sample_qz, sample_pz):
+    def mmd_penalty(self, sample_qz, sample_pz):
         opts = self.opts
         sigma2_p = opts['pz_scale'] ** 2
         kernel = opts['mmd_kernel']
@@ -315,65 +315,6 @@ class WAE(object):
                 res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
                 stat += res1 - res2
         return stat
-    
-    def mmd_penalty(self, sample_qz, sample_pz):
-    # def mmd_penalty(sample_qz, sample_pz, batch_size=None, zdim=None):
-        sample_qz = tf.cast(sample_qz, tf.float32)
-        sample_pz = tf.cast(sample_pz, tf.float32)
-        sigma2_p = 1. ** 2  # here to change if we want to change pz_scale
-        n = tf.cast(tf.shape(sample_qz)[0], tf.int32)
-        nf = tf.cast(tf.shape(sample_qz)[0], tf.float32)
-        
-        norms_pz = tf.reduce_sum(tf.square(sample_pz), axis=1, keep_dims=True)
-        dotprods_pz = tf.matmul(sample_pz, sample_pz, transpose_b=True)
-        distances_pz = norms_pz + tf.transpose(norms_pz) - 2. * dotprods_pz
-
-        norms_qz = tf.reduce_sum(tf.square(sample_qz), axis=1, keep_dims=True)
-        dotprods_qz = tf.matmul(sample_qz, sample_qz, transpose_b=True)
-        distances_qz = norms_qz + tf.transpose(norms_qz) - 2. * dotprods_qz
-
-        dotprods = tf.matmul(sample_qz, sample_pz, transpose_b=True)
-        distances = norms_qz + tf.transpose(norms_pz) - 2. * dotprods
-        
-        
-        
-        # norms_pz = K.sum(tf.square(sample_pz), axis=1, keepdims=True)
-        # dotprods_pz = tf.matmul(sample_pz, sample_pz, transpose_b=True)
-        # distances_pz = norms_pz + tf.transpose(norms_pz) - 2. * dotprods_pz
-
-    
-        # norms_qz = K.sum(tf.square(sample_qz), axis=1, keepdims=True)
-        # dotprods_qz = tf.matmul(sample_qz, sample_qz, transpose_b=True)
-        # distances_qz = norms_qz + tf.transpose(norms_qz) - 2. * dotprods_qz
-
-        # dotprods = tf.matmul(sample_qz, sample_pz, transpose_b=True)
-        # distances = norms_qz + tf.transpose(norms_pz) - 2. * dotprods
-        Cbase = 2. * 64 * sigma2_p
-        stat = 0.
-        
-        for scale in [.1, .2, .5, 1., 2., 5., 10.]:
-            C = Cbase * scale
-            res1 = C / (C + distances_qz)
-            res1 += C / (C + distances_pz)
-            
-            
-            res1 = tf.linalg.set_diag(res1, tf.zeros(n))
-            # res1 = K.sum(res1, axis=0)
-            
-            # res_1 = res1 - tf.linalg.tensor_diag()
-            # res1 = tf.multiply(res1, 1. - tf.eye(n))
-
-            
-            res1 = tf.reduce_sum(res1) / (nf * nf - nf)
-            res2 = C / (C + distances)
-            res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
-            stat += res1 - res2
-            
-            # res1 = K.sum(res1) / (nf * nf - nf)
-            # res2 = C / (C + distances)
-            # res2 = K.sum(res2) * 2. / (nf * nf)
-            # stat += res1 - res2
-        return stat 
 
     def gan_penalty(self, sample_qz, sample_pz):
         opts = self.opts
@@ -498,7 +439,7 @@ class WAE(object):
         steps_max = 200
         batch_size = opts['e_pretrain_sample_size']
         rng = np.random.RandomState(0)
-        for step in xrange(steps_max):
+        for step in range(steps_max):
             train_size = data.num_points
             data_ids = rng.choice(train_size, min(train_size, batch_size),
                                         replace=False)
@@ -538,14 +479,14 @@ class WAE(object):
             dot_prod = -1
             best_of_runs = 10e5 # Any positive value would do
             updated = False
-            for _ in xrange(3):
+            for _ in range(3):
                 # We will run 3 times from random inits
                 loss_prev = 10e5 # Any positive value would do
                 proj_vars = tf.get_collection(
                     tf.GraphKeys.GLOBAL_VARIABLES, scope='leastGaussian2d')
                 self.sess.run(tf.variables_initializer(proj_vars))
                 step = 0
-                for _ in xrange(5000):
+                for _ in range(5000):
                     self.sess.run(optim, feed_dict={sample:X})
                     step += 1
                     if step % 10 == 0:
@@ -591,7 +532,7 @@ class WAE(object):
         blurr_vals = []
         encoding_changes = []
         enc_test_prev = None
-        batches_num = 20
+        batches_num = data.num_points // opts['batch_size']
         train_size = data.num_points
         self.num_pics = opts['plot_num_pics']
         rng = np.random.RandomState(0)
@@ -621,7 +562,7 @@ class WAE(object):
             feed_dict={self.sample_points: data.data[:self.num_pics]})
         logging.error('Real pictures sharpness = %.5f' % np.min(real_blurr))
 
-        for epoch in xrange(opts["epoch_num"]):
+        for epoch in range(opts["epoch_num"]):
 
             # Update learning rate if necessary
 
@@ -653,7 +594,7 @@ class WAE(object):
             # Iterate over batches
             np.random.seed(0)
             rng = np.random.RandomState(0)    
-            for it in xrange(batches_num):
+            for it in range(batches_num):
 
                 # Sample batches of data points and Pz noise
                 #data_ids = rng.choice(
@@ -1018,7 +959,7 @@ def save_plots(opts, sample_train, sample_test,
             r_ptr += 1
             w_ptr += 2
 
-        for idx in xrange(num_pics):
+        for idx in range(num_pics):
             if greyscale:
                 pics.append(1. - merged[idx, :, :, :])
             else:
@@ -1035,7 +976,7 @@ def save_plots(opts, sample_train, sample_test,
 
         assert len(sample) == num_pics
         pics = []
-        for idx in xrange(num_pics):
+        for idx in range(num_pics):
             if greyscale:
                 pics.append(1. - sample[idx, :, :, :])
             else:
