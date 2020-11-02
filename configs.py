@@ -51,7 +51,7 @@ config_celebA['cost'] = 'l2sq' #l2, l2sq, l1
 config_celebA['pz_scale'] = 1.
 config_celebA['z_test'] = 'mmd'
 config_celebA['mmd_kernel'] = 'IMQ' # RBF, IMQ
-config_celebA['lambda'] = 100
+config_celebA['lambda'] = 100.
 config_celebA['lambda_schedule'] = 'constant'
 
 # MNIST config from ICLR paper
