@@ -532,7 +532,7 @@ class WAE(object):
         blurr_vals = []
         encoding_changes = []
         enc_test_prev = None
-        batches_num = 20
+        batches_num = data.num_points / opts['batch_size']
         train_size = data.num_points
         self.num_pics = opts['plot_num_pics']
         rng = np.random.RandomState(0)
