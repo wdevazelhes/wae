@@ -13,7 +13,7 @@ import numpy as np
 
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
