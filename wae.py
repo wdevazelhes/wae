@@ -574,6 +574,7 @@ class WAE(object):
                 # if epoch == 100:
                 #     decay = decay / 10.
                 # no scheduler here
+                pass
             elif opts['lr_schedule'] == "manual_smooth":
                 enum = opts['epoch_num']
                 decay_t = np.exp(np.log(100.) / enum)
