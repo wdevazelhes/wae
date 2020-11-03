@@ -532,7 +532,7 @@ class WAE(object):
         blurr_vals = []
         encoding_changes = []
         enc_test_prev = None
-        batches_num = data.num_points // opts['batch_size']
+        batches_num = 2000
         train_size = data.num_points
         self.num_pics = opts['plot_num_pics']
         rng = np.random.RandomState(0)
@@ -567,12 +567,13 @@ class WAE(object):
             # Update learning rate if necessary
 
             if opts['lr_schedule'] == "manual":
-                if epoch == 30:
-                    decay = decay / 2.
-                if epoch == 50:
-                    decay = decay / 5.
-                if epoch == 100:
-                    decay = decay / 10.
+                # if epoch == 30:
+                #     decay = decay / 2.
+                # if epoch == 50:
+                #     decay = decay / 5.
+                # if epoch == 100:
+                #     decay = decay / 10.
+                # no scheduler here
             elif opts['lr_schedule'] == "manual_smooth":
                 enum = opts['epoch_num']
                 decay_t = np.exp(np.log(100.) / enum)
@@ -599,7 +600,7 @@ class WAE(object):
                 # Sample batches of data points and Pz noise
                 #data_ids = rng.choice(
                 #    train_size, opts['batch_size'], replace=False)
-                data_ids = slice(it * opts['batch_size'], (it + 1) * opts['batch_size'])
+                data_ids = slice((it * opts['batch_size']) % 162670 , (it * opts['batch_size']) % 162670 + opts['batch_size'])
                 # TODO: check that the data here is the same as in our WAE
                 batch_images = data.data[data_ids].astype(np.float32)
                 #print(batch_images[0, 0, 0])
@@ -711,32 +712,33 @@ class WAE(object):
                         counter, losses_rec[-1]))
                     # logging.error('Layer 1 activations after {} steps: {}'.format(
                         # counter, l1s[-1]))
-                    np.save('encoded_{}'.format(counter), encodeds[-1])
-                    np.save('z_{}'.format(counter), sample_noises[-1])
-                    np.save('l1_{}'.format(counter), l1s[-1])
-                    np.save('l2_{}'.format(counter), l2s[-1])
-                    np.save('l3_{}'.format(counter), l3s[-1])
-                    np.save('l4_{}'.format(counter), l4s[-1])
-                    to_monitor_print = to_monitors[-1]
-                    # for key, _ in to_save_dic_e.items():
-                        # to_monitor_print[key] = to_save_dic_e[key]
-                    for key, val in to_monitor_print.items():
-                        np.save('{}_{}'.format(key, counter), val)
-                    to_monitor_dec_print = to_monitor_decs[-1]
-                    # for key, _ in to_save_dic_d.items():
-                        # to_monitor_dec_print[key] = to_save_dic_d[key]
-                    for key, val in to_monitor_dec_print.items():
-                        np.save('{}_{}'.format(key, counter), val)
-                    np.save('ld1_{}'.format(counter), ld1s[-1])
-                    np.save('ld2_{}'.format(counter), ld2s[-1])
-                    np.save('ld3_{}'.format(counter), ld3s[-1])
-                    np.save('ld4_{}'.format(counter), ld4s[-1])
-                    np.save('reconstructed_{}'.format(counter), reconstructeds[-1])
-                    # np.save('noo_iter{}'.format(counter), noos[-1])
-                    np.save('a0_{}'.format(counter), a0s[-1])
-                    np.save('rec_loss_{}'.format(counter), losses_rec[-1])
-                    np.save('wae_loss_{}'.format(counter), losses[-1])
-                    np.save('mmd_loss_{}'.format(counter), losses_match[-1])
+                    if counter % 100 == 0:
+                        np.save('encoded_{}'.format(counter), encodeds[-1])
+                        np.save('z_{}'.format(counter), sample_noises[-1])
+                        np.save('l1_{}'.format(counter), l1s[-1])
+                        np.save('l2_{}'.format(counter), l2s[-1])
+                        np.save('l3_{}'.format(counter), l3s[-1])
+                        np.save('l4_{}'.format(counter), l4s[-1])
+                        to_monitor_print = to_monitors[-1]
+                        # for key, _ in to_save_dic_e.items():
+                            # to_monitor_print[key] = to_save_dic_e[key]
+                        for key, val in to_monitor_print.items():
+                            np.save('{}_{}'.format(key, counter), val)
+                        to_monitor_dec_print = to_monitor_decs[-1]
+                        # for key, _ in to_save_dic_d.items():
+                            # to_monitor_dec_print[key] = to_save_dic_d[key]
+                        for key, val in to_monitor_dec_print.items():
+                            np.save('{}_{}'.format(key, counter), val)
+                        np.save('ld1_{}'.format(counter), ld1s[-1])
+                        np.save('ld2_{}'.format(counter), ld2s[-1])
+                        np.save('ld3_{}'.format(counter), ld3s[-1])
+                        np.save('ld4_{}'.format(counter), ld4s[-1])
+                        np.save('reconstructed_{}'.format(counter), reconstructeds[-1])
+                        # np.save('noo_iter{}'.format(counter), noos[-1])
+                        np.save('a0_{}'.format(counter), a0s[-1])
+                        np.save('rec_loss_{}'.format(counter), losses_rec[-1])
+                        np.save('wae_loss_{}'.format(counter), losses[-1])
+                        np.save('mmd_loss_{}'.format(counter), losses_match[-1])
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
