@@ -37,7 +37,7 @@ def improved_sampling(opts):
             if opts['pz'] in ('normal', 'sphere'):
                 codes = tf.get_variable(
                     "latent_codes", [BATCH_SIZE, opts['zdim']],
-                    tf.float32, tf.random_normal_initializer(stddev=1., seed=0))
+                    tf.float64, tf.random_normal_initializer(stddev=1., seed=0))
                 if opts['pz'] == 'sphere':
                     z = codes / (tf.norm(codes, axis=0) + 1e-8)
                 else:
@@ -45,7 +45,7 @@ def improved_sampling(opts):
             elif opts['pz'] == 'uniform':
                 codes = tf.get_variable(
                     "latent_codes", [BATCH_SIZE, opts['zdim']],
-                    tf.float32, tf.random_uniform_initializer(minval=-1., maxval=1., seed=0))
+                    tf.float64, tf.random_uniform_initializer(minval=-1., maxval=1., seed=0))
             z = opts['pz_scale'] * z
             is_training_ph = tf.placeholder(tf.bool, name='is_training_ph')
             gen, _ = decoder(opts, z, is_training=is_training_ph)
@@ -134,7 +134,7 @@ def contrast_norm(pics):
 
 def add_aefixedpoint_cost(opts, wae_model):
 
-    w_aefixedpoint = tf.placeholder(tf.float32, name='w_aefixedpoint')
+    w_aefixedpoint = tf.placeholder(tf.float64, name='w_aefixedpoint')
     wae_model.w_aefixedpoint = w_aefixedpoint
 
     gen_images = wae_model.decoded
@@ -185,7 +185,7 @@ def examples(opts, wae_model):
         init = tf.variables_initializer(inputs_vars)
         init.run()
 
-def block_diagonal(matrices, dtype=tf.float32):
+def block_diagonal(matrices, dtype=tf.float64):
     """Constructs block-diagonal matrices from a list of batched 2D tensors.
     Taken from: https://stackoverflow.com/questions/42157781/block-diagonal-matrices-in-tensorflow
 
@@ -266,7 +266,7 @@ def mmdpp_penalty(opts, wae_model, sample_pz):
     # For that it is enough to sample batch_size * K standard normal vectors
     # rescale those and then add encoder means
     eps = tf.random_normal((n * NUMCODES, opts['zdim']),
-                           0., 1., dtype=tf.float32, seed=0)
+                           0., 1., dtype=tf.float64, seed=0)
     sigmas_q = wae_model.enc_sigmas
     block_var = tf.reshape(tf.tile(sigmas_q, [1, NUMCODES]), [-1, opts['zdim']])
     eps_q = tf.multiply(eps, tf.sqrt(1e-8 + tf.exp(block_var)))
@@ -275,7 +275,7 @@ def mmdpp_penalty(opts, wae_model, sample_pz):
                              [-1, opts['zdim']])
     sample_qhat = block_means + eps_q
     # sample_qhat = tf.random_normal((n * NUMCODES, opts['zdim']),
-    #                        0., 1., dtype=tf.float32)
+    #                        0., 1., dtype=tf.float64)
 
     sq_norms_pz, dist_pz = sq_distances(sample_pz)
     sq_norms_qhat, dist_qhat = sq_distances(sample_qhat)
@@ -284,8 +284,8 @@ def mmdpp_penalty(opts, wae_model, sample_pz):
                    - 2. * dotprods_pz_qhat
 
     mask = block_diagonal(
-        [np.ones((NUMCODES, NUMCODES), dtype=np.float32) for i in range(n)],
-        tf.float32)
+        [np.ones((NUMCODES, NUMCODES), dtype=np.float64) for i in range(n)],
+        tf.float64)
 
     if kernel == 'RBF':
         # Median heuristic for the sigma^2 of Gaussian kernel
@@ -386,7 +386,7 @@ def mmdpp_1d_penalty(opts, wae_model, sample_pz):
     # For that it is enough to sample batch_size * K standard normal vectors
     # rescale those and then add encoder means
     eps = tf.random_normal((n * NUMCODES, opts['zdim']),
-                           0., 1., dtype=tf.float32, seed=0)
+                           0., 1., dtype=tf.float64, seed=0)
     sigmas_q = wae_model.enc_sigmas
     block_var = tf.reshape(tf.tile(sigmas_q, [1, NUMCODES]), [-1, opts['zdim']])
     eps_q = tf.multiply(eps, tf.sqrt(1e-8 + tf.exp(block_var)))
@@ -395,7 +395,7 @@ def mmdpp_1d_penalty(opts, wae_model, sample_pz):
                              [-1, opts['zdim']])
     sample_qhat = block_means + eps_q
     # sample_qhat = tf.random_normal((n * NUMCODES, opts['zdim']),
-    #                        0., 1., dtype=tf.float32)
+    #                        0., 1., dtype=tf.float64)
 
     dist_pz = sq_distances_1d(sample_pz)
     dist_qhat = sq_distances_1d(sample_qhat)
@@ -406,8 +406,8 @@ def mmdpp_1d_penalty(opts, wae_model, sample_pz):
                    + tf.multiply(temp_qhat_t, temp_qhat_t) \
                    - 2. * tf.multiply(temp_pz, temp_qhat_t)
     mask = block_diagonal(
-        [np.ones((NUMCODES, NUMCODES), dtype=np.float32) for i in range(n)],
-        tf.float32)
+        [np.ones((NUMCODES, NUMCODES), dtype=np.float64) for i in range(n)],
+        tf.float64)
     mask = tf.expand_dims(mask, 2)
     mask = tf.transpose(mask, [0, 2, 1])
     mask = tf.tile(mask, [1, opts['zdim'], 1])

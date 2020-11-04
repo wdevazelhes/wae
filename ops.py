@@ -84,15 +84,15 @@ def linear(opts, input_, output_dim, scope=None, init='normal', reuse=None, retu
     with tf.variable_scope(scope or "lin", reuse=reuse):
         if init == 'normal':
             matrix = tf.get_variable(
-                "W", [in_shape, output_dim], tf.float32,
-                tf.random_normal_initializer(stddev=stddev, seed=0))
+                "W", [in_shape, output_dim], tf.float64,
+                tf.random_normal_initializer(stddev=stddev, seed=0, dtype=tf.dtypes.float64))
         else:
             matrix = tf.get_variable(
-                "W", [in_shape, output_dim], tf.float32,
-                tf.constant_initializer(np.identity(in_shape)))
+                "W", [in_shape, output_dim], tf.float64,
+                tf.constant_initializer(np.identity(in_shape), dtype=tf.dtypes.float64))
         bias = tf.get_variable(
-            "b", [output_dim],
-            initializer=tf.constant_initializer(bias_start))
+            "b", [output_dim], tf.float64,
+            initializer=tf.constant_initializer(bias_start, dtype=tf.dtypes.float64))
 
     if return_weights:
         return tf.matmul(input_, matrix) + bias, matrix, bias
@@ -121,14 +121,14 @@ def conv2d(opts, input_, output_dim, d_h=2, d_w=2, scope=None,
     tf.set_random_seed(0)
     with tf.variable_scope(scope or 'conv2d'):
         w = tf.get_variable(
-            'filter', [k_h, k_w, shape[-1], output_dim],
-            initializer=tf.truncated_normal_initializer(stddev=stddev, seed=0))
+            'filter', [k_h, k_w, shape[-1], output_dim], tf.float64,
+            initializer=tf.truncated_normal_initializer(stddev=stddev, seed=0, dtype=tf.dtypes.float64))
         if l2_norm:
             w = tf.nn.l2_normalize(w, 2)
         conv = tf.nn.conv2d(input_, w, strides=[1, d_h, d_w, 1], padding=padding)
-        biases = tf.get_variable(
-            'b', [output_dim],
-            initializer=tf.constant_initializer(bias_start))
+        biases = tf.get_variable( 
+            'b', [output_dim], tf.float64,
+            initializer=tf.constant_initializer(bias_start, dtype=tf.dtypes.float64))
         conv = tf.nn.bias_add(conv, biases)
 
     return conv, w, biases
@@ -150,14 +150,14 @@ def deconv2d(opts, input_, output_shape, d_h=2, d_w=2, scope=None, conv_filters_
 
     with tf.variable_scope(scope or "deconv2d"):
         w = tf.get_variable(
-            'filter', [k_h, k_w, output_shape[-1], shape[-1]],
-            initializer=tf.random_normal_initializer(stddev=stddev, seed=0))
+            'filter', [k_h, k_w, output_shape[-1], shape[-1]],tf.float64,
+            initializer=tf.random_normal_initializer(stddev=stddev, seed=0, dtype=tf.dtypes.float64))
         deconv = tf.nn.conv2d_transpose(
             input_, w, output_shape=output_shape,
             strides=[1, d_h, d_w, 1], padding=padding)
         biases = tf.get_variable(
-            'b', [output_shape[-1]],
-            initializer=tf.constant_initializer(0.0))
+            'b', [output_shape[-1]],tf.float64,
+            initializer=tf.constant_initializer(0.0, dtype=tf.dtypes.float64))
         deconv = tf.nn.bias_add(deconv, biases)
 
 

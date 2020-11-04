@@ -68,7 +68,7 @@ def encoder(opts, inputs, reuse=False, is_training=False):
             # place in latent space
             sample_size = tf.shape(res)[0]
             eps = tf.random_normal((sample_size, opts['zdim']),
-                                   0., 1., dtype=tf.float32, seed=0)
+                                   0., 1., dtype=tf.float64, seed=0)
             eps_mod, noise_matrix = transform_noise(opts, res, eps)
             res = res + eps_mod
 

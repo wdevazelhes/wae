@@ -82,4 +82,4 @@ def listdir(dirname):
     return tf.gfile.ListDirectory(dirname)
 
 def get_batch_size(inputs):
-    return tf.cast(tf.shape(inputs)[0], tf.float32)
+    return tf.cast(tf.shape(inputs)[0], tf.float64)

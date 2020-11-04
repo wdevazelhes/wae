@@ -71,7 +71,7 @@ class WAE(object):
                 self.add_sigmas_debug()
 
             eps = tf.random_normal((sample_size, opts['zdim']),
-                                   0., 1., dtype=tf.float32, seed=0)
+                                   0., 1., dtype=tf.float64, seed=0)
             self.encoded = self.enc_mean + tf.multiply(
                 eps, tf.sqrt(1e-8 + tf.exp(self.enc_sigmas)))
             # self.encoded = self.enc_mean + tf.multiply(
@@ -117,17 +117,17 @@ class WAE(object):
         opts = self.opts
         shape = self.data_shape
         data = tf.placeholder(
-            tf.float32, [None] + shape, name='real_points_ph')
+            tf.float64, [None] + shape, name='real_points_ph')
         noise = tf.placeholder(
-            tf.float32, [None] + [opts['zdim']], name='noise_ph')
+            tf.float64, [None] + [opts['zdim']], name='noise_ph')
 
         self.sample_points = data
         self.sample_noise = noise
 
     def add_training_placeholders(self):
         opts = self.opts
-        decay = tf.placeholder(tf.float32, name='rate_decay_ph')
-        wae_lambda = tf.placeholder(tf.float32, name='lambda_ph')
+        decay = tf.placeholder(tf.float64, name='rate_decay_ph')
+        wae_lambda = tf.placeholder(tf.float64, name='lambda_ph')
         is_training = tf.placeholder(tf.bool, name='is_training_ph')
         self.lr_decay = decay
         self.wae_lambda = wae_lambda
@@ -177,13 +177,13 @@ class WAE(object):
         with tf.variable_scope('leastGaussian2d'):
             # Projection matrix which we are going to tune
             sample = tf.placeholder(
-                tf.float32, [None, opts['zdim']], name='sample_ph')
+                tf.float64, [None, opts['zdim']], name='sample_ph')
             v = tf.get_variable(
                 "proj_v", [opts['zdim'], 1],
-                tf.float32, tf.random_normal_initializer(stddev=1., seed=0))
+                tf.float64, tf.random_normal_initializer(stddev=1., seed=0, dtype=tf.dtypes.float64))
             u = tf.get_variable(
                 "proj_u", [opts['zdim'], 1],
-                tf.float32, tf.random_normal_initializer(stddev=1., seed=0))
+                tf.float64, tf.random_normal_initializer(stddev=1., seed=0, dtype=tf.dtypes.float64))
             npoints = tf.cast(tf.shape(sample)[0], tf.int32)
 
             # First we need to make sure projection matrix is orthogonal
@@ -194,13 +194,13 @@ class WAE(object):
             u_norm = tf.nn.l2_normalize(u_ort, 0)
             Mproj = tf.concat([v_norm, u_norm], 1)
             sample_proj = tf.matmul(sample, Mproj)
-            a = tf.eye(npoints)
-            a -= tf.ones([npoints, npoints]) / tf.cast(npoints, tf.float32)
+            a = tf.eye(npoints, dtype=tf.float64)
+            a -= tf.ones([npoints, npoints], dtype=tf.float64) / tf.cast(npoints, tf.float64)
             b = tf.matmul(sample_proj, tf.matmul(a, a), transpose_a=True)
             b = tf.matmul(b, sample_proj)
             # Sample covariance matrix
-            covhat = b / (tf.cast(npoints, tf.float32) - 1)
-            gcov = opts['pz_scale'] ** 2.  * tf.eye(2)
+            covhat = b / (tf.cast(npoints, tf.float64) - 1)
+            gcov = opts['pz_scale'] ** 2.  * tf.eye(2, dtype=tf.float64)
             # l2 distance between sample cov and the Gaussian cov
             projloss =  tf.reduce_sum(tf.square(covhat - gcov))
             # Also account for the first moment, i.e. expected value
@@ -242,7 +242,7 @@ class WAE(object):
         kernel = opts['mmd_kernel']
         n = utils.get_batch_size(sample_qz)
         n = tf.cast(n, tf.int32)
-        nf = tf.cast(n, tf.float32)
+        nf = tf.cast(n, tf.float64)
         half_size = (n * n - n) / 2
 
         norms_pz = tf.reduce_sum(tf.square(sample_pz), axis=1, keep_dims=True)
@@ -309,7 +309,7 @@ class WAE(object):
                 res1 = C / (C + distances_qz)
                 res1 += C / (C + distances_pz)
                 # res1 = tf.multiply(res1, 1. - tf.eye(n))
-                res1 = tf.linalg.set_diag(res1, tf.zeros(n))
+                res1 = tf.linalg.set_diag(res1, tf.zeros(n, dtype=tf.dtypes.float64))
                 res1 = tf.reduce_sum(res1) / (nf * nf - nf)
                 res2 = C / (C + distances)
                 res2 = tf.reduce_sum(res2) * 2. / (nf * nf)
@@ -423,12 +423,12 @@ class WAE(object):
         distr = opts['pz']
         if distr == 'uniform':
             noise = rng.uniform(
-                -1, 1, [num, opts["zdim"]]).astype(np.float32)
+                -1, 1, [num, opts["zdim"]]).astype(np.float64)
         elif distr in ('normal', 'sphere'):
             mean = np.zeros(opts["zdim"])
             cov = np.identity(opts["zdim"])
             noise = rng.multivariate_normal(
-                mean, cov, num).astype(np.float32)
+                mean, cov, num).astype(np.float64)
             if distr == 'sphere':
                 noise = noise / np.sqrt(
                     np.sum(noise * noise, axis=1))[:, np.newaxis]
@@ -603,7 +603,7 @@ class WAE(object):
                 #    train_size, opts['batch_size'], replace=False)
                 data_ids = slice((it * opts['batch_size']) % 162670 , (it * opts['batch_size']) % 162670 + opts['batch_size'])
                 # TODO: check that the data here is the same as in our WAE
-                batch_images = data.data[data_ids].astype(np.float32)
+                batch_images = data.data[data_ids].astype(np.float64)
                 #print(batch_images[0, 0, 0])
                 batch_noise = self.sample_pz(rng, opts['batch_size'])
                 
@@ -848,8 +848,8 @@ class WAE(object):
             # outputs a final prediction: 
             rng_final = np.random.RandomState(0)
             feed_d = {
-            self.sample_points: rng_final.randn(100, 64, 64, 3).astype(np.float32),
-            self.sample_noise: rng_final.randn(100, 64).astype(np.float32),
+            self.sample_points: rng_final.randn(100, 64, 64, 3).astype(np.float64),
+            self.sample_noise: rng_final.randn(100, 64).astype(np.float64),
             self.lr_decay: decay,
             self.wae_lambda: wae_lambda,
             self.is_training: False}
