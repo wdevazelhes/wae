@@ -689,21 +689,6 @@ class WAE(object):
                 losses.append(loss)
                 losses_rec.append(loss_rec)
                 losses_match.append(loss_match)
-                encodeds.append(encoded)
-                sample_noises.append(sample_noise)
-                l1s.append(l1)
-                l2s.append(l2)
-                l3s.append(l3)
-                l4s.append(l4)
-                to_monitors.append(to_monitor)
-                ld1s.append(ld1)
-                ld2s.append(ld2)
-                ld3s.append(ld3)
-                ld4s.append(ld4)
-                reconstructeds.append(reconstructed)
-                noos.append(noo)
-                to_monitor_decs.append(to_monitor_dec)
-                a0s.append(a0)
                 if opts['verbose']:
                     logging.error('Matching penalty after %d steps: %f' % (
                         counter, losses_match[-1]))
@@ -714,32 +699,32 @@ class WAE(object):
                     # logging.error('Layer 1 activations after {} steps: {}'.format(
                         # counter, l1s[-1]))
                     if counter % 100 == 0:
-                        np.save('encoded_{}'.format(counter), encodeds[-1])
-                        np.save('z_{}'.format(counter), sample_noises[-1])
-                        np.save('l1_{}'.format(counter), l1s[-1])
-                        np.save('l2_{}'.format(counter), l2s[-1])
-                        np.save('l3_{}'.format(counter), l3s[-1])
-                        np.save('l4_{}'.format(counter), l4s[-1])
-                        to_monitor_print = to_monitors[-1]
+                        np.save('encoded_{}'.format(counter), encoded)
+                        np.save('z_{}'.format(counter), sample_noise)
+                        np.save('l1_{}'.format(counter), l1)
+                        np.save('l2_{}'.format(counter), l2)
+                        np.save('l3_{}'.format(counter), l3)
+                        np.save('l4_{}'.format(counter), l4)
+                        to_monitor_print = to_monitor
                         # for key, _ in to_save_dic_e.items():
                             # to_monitor_print[key] = to_save_dic_e[key]
                         for key, val in to_monitor_print.items():
                             np.save('{}_{}'.format(key, counter), val)
-                        to_monitor_dec_print = to_monitor_decs[-1]
+                        to_monitor_dec_print = to_monitor_dec
                         # for key, _ in to_save_dic_d.items():
                             # to_monitor_dec_print[key] = to_save_dic_d[key]
                         for key, val in to_monitor_dec_print.items():
                             np.save('{}_{}'.format(key, counter), val)
-                        np.save('ld1_{}'.format(counter), ld1s[-1])
-                        np.save('ld2_{}'.format(counter), ld2s[-1])
-                        np.save('ld3_{}'.format(counter), ld3s[-1])
-                        np.save('ld4_{}'.format(counter), ld4s[-1])
-                        np.save('reconstructed_{}'.format(counter), reconstructeds[-1])
+                        np.save('ld1_{}'.format(counter), ld1)
+                        np.save('ld2_{}'.format(counter), ld2)
+                        np.save('ld3_{}'.format(counter), ld3)
+                        np.save('ld4_{}'.format(counter), ld4)
+                        np.save('reconstructed_{}'.format(counter), reconstructed)
                         # np.save('noo_iter{}'.format(counter), noos[-1])
-                        np.save('a0_{}'.format(counter), a0s[-1])
-                        np.save('rec_loss_{}'.format(counter), losses_rec[-1])
-                        np.save('wae_loss_{}'.format(counter), losses[-1])
-                        np.save('mmd_loss_{}'.format(counter), losses_match[-1])
+                        np.save('a0_{}'.format(counter), a0)
+                        np.save('rec_loss_{}'.format(counter), losses_rec)
+                        np.save('wae_loss_{}'.format(counter), loss)
+                        np.save('mmd_loss_{}'.format(counter), loss_match)
 
                 # Update regularizer if necessary
                 if opts['lambda_schedule'] == 'adaptive':
@@ -849,16 +834,16 @@ class WAE(object):
                         Qz_test = enc_test[:, :2]
                         Pz = pz_noise[:, :2]
 
-                    # Making plots
-                    save_plots(opts, data.data[:self.num_pics],
-                               data.test_data[:self.num_pics],
-                               rec_train[:self.num_pics],
-                               rec_test[:self.num_pics],
-                               sample_gen,
-                               Qz_train, Qz_test, Pz,
-                               losses_rec, losses_match, blurr_vals,
-                               encoding_changes,
-                               'res_e%04d_mb%05d.png' % (epoch, it))
+                    # # Making plots
+                    # save_plots(opts, data.data[:self.num_pics],
+                    #            data.test_data[:self.num_pics],
+                    #            rec_train[:self.num_pics],
+                    #            rec_test[:self.num_pics],
+                    #            sample_gen,
+                    #            Qz_train, Qz_test, Pz,
+                    #            losses_rec, losses_match, blurr_vals,
+                    #            encoding_changes,
+                    #            'res_e%04d_mb%05d.png' % (epoch, it))
 
             # outputs a final prediction: 
             rng_final = np.random.RandomState(0)
